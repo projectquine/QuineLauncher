@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.quinelauncher.databinding.ActivityMainBinding
 import android.content.Context
 import android.net.wifi.WifiManager
+import android.os.UserHandle
 
 
 class MainActivity : AppCompatActivity() {
@@ -20,9 +21,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Get the UID of the com.termux app
+        val packageManager = packageManager
+        val termuxUid = packageManager.getApplicationInfo("com.termux", 0).uid
+
         // Set the title with the IP address
         val ipAddress = getIpAddress()
-        title = "QuineOS ($ipAddress)"
+        title = "QuineOS (ssh u0_a${termuxUid % 10000}@$ipAddress -p8022)"
 
         loadApps()
 
