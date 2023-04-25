@@ -89,7 +89,9 @@ class MainActivity : AppCompatActivity() {
             "com.termux.x11",
             "com.topjohnwu.magisk",
             "com.android.settings",
-            "net.christianbeier.droidvnc_ng"
+            "net.christianbeier.droidvnc_ng",
+            "com.tailscale.ipn",
+            "com.example.quinecamera"
         )
         return allowedPackages.contains(packageName)
     }
