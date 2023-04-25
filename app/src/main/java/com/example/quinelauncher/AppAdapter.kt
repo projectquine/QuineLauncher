@@ -22,12 +22,23 @@ class AppAdapter(private val context: Context, private val appList: List<App>) :
         val app = appList[position]
         holder.binding.icon.setImageDrawable(app.icon)
         holder.binding.appName.text = app.name
+
         holder.binding.root.setOnClickListener {
             val intent = context.packageManager.getLaunchIntentForPackage(app.packageName)
             context.startActivity(intent)
         }
-    }
 
+        holder.binding.root.setOnLongClickListener {
+            if (context is MainActivity) {
+                if (app.packageName == "com.termux.x11") {
+                    context.openTermuxX11Preferences()
+                } else {
+                    context.openAppSettings(app.packageName)
+                }
+            }
+            true
+        }
+    }
 
     override fun getItemCount() = appList.size
 }

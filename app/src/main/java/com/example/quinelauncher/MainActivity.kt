@@ -7,9 +7,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.quinelauncher.databinding.ActivityMainBinding
 import android.content.Context
+import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import java.util.concurrent.TimeUnit
 import android.widget.Toast
 
@@ -133,6 +135,20 @@ class MainActivity : AppCompatActivity() {
             "com.example.quinecamera"
         )
         return allowedPackages.contains(packageName)
+    }
+    fun openAppSettings(packageName: String) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        startActivity(intent)
+    }
+
+    fun openTermuxX11Preferences() {
+        val intent = Intent().apply {
+            setClassName("com.termux.x11", "com.termux.x11.LoriePreferences")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
     }
 
 }
