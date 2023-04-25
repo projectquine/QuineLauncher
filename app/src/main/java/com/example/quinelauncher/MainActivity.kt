@@ -11,6 +11,8 @@ import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
 import java.util.concurrent.TimeUnit
+import android.widget.Toast
+
 
 private val IP_UPDATE_INTERVAL = TimeUnit.MINUTES.toMillis(1)
 
@@ -30,12 +32,43 @@ class MainActivity : AppCompatActivity() {
 
         // Set the title with the IP address
         updateTitleWithIpAddress(termuxUid)
-
+        startApps()
         loadApps()
 
         binding.recyclerView.layoutManager = GridLayoutManager(this, 4)
         binding.recyclerView.adapter = AppAdapter(this, appList)
+
+
     }
+
+    private fun startApps() {
+        // Start the X11 app
+        val x11PackageName = "com.termux.x11"
+        val x11Intent = packageManager.getLaunchIntentForPackage(x11PackageName)
+        if (x11Intent != null) {
+            x11Intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(x11Intent)
+            // Wait for the X11 app to start
+            Thread.sleep(5000)
+        } else {
+            // Show an error message if the app is not installed
+            Toast.makeText(this, "App not installed: $x11PackageName", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        // Start the camera app
+        val cameraPackageName = "com.example.quinecamera"
+        val cameraIntent = packageManager.getLaunchIntentForPackage(cameraPackageName)
+        if (cameraIntent != null) {
+            cameraIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(cameraIntent)
+        } else {
+            // Show an error message if the app is not installed
+            Toast.makeText(this, "App not installed: $cameraPackageName", Toast.LENGTH_LONG).show()
+            return
+        }
+    }
+
 
     private val handler = Handler(Looper.getMainLooper())
     private val updateIpRunnable = object : Runnable {
@@ -64,7 +97,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         handler.post(updateIpRunnable)
+
+        val launcherIntent = Intent(Intent.ACTION_MAIN)
+        launcherIntent.addCategory(Intent.CATEGORY_HOME)
+        launcherIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(launcherIntent)
     }
+
 
     override fun onPause() {
         super.onPause()
