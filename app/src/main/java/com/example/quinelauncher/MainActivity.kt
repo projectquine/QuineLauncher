@@ -8,8 +8,11 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.quinelauncher.databinding.ActivityMainBinding
 import android.content.Context
 import android.net.wifi.WifiManager
-import android.os.UserHandle
+import android.os.Handler
+import android.os.Looper
+import java.util.concurrent.TimeUnit
 
+private val IP_UPDATE_INTERVAL = TimeUnit.MINUTES.toMillis(1)
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,13 +29,24 @@ class MainActivity : AppCompatActivity() {
         val termuxUid = packageManager.getApplicationInfo("com.termux", 0).uid
 
         // Set the title with the IP address
-        val ipAddress = getIpAddress()
-        title = "QuineOS (ssh u0_a${termuxUid % 10000}@$ipAddress -p8022)"
+        updateTitleWithIpAddress(termuxUid)
 
         loadApps()
 
         binding.recyclerView.layoutManager = GridLayoutManager(this, 4)
         binding.recyclerView.adapter = AppAdapter(this, appList)
+    }
+
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateIpRunnable = object : Runnable {
+        override fun run() {
+            updateTitleWithIpAddress()
+            handler.postDelayed(this, IP_UPDATE_INTERVAL)
+        }
+    }
+    private fun updateTitleWithIpAddress(termuxUid: Int? = null) {
+        val ipAddress = getIpAddress()
+        title = "QuineOS (u0_a${termuxUid ?: packageManager.getApplicationInfo("com.termux", 0).uid % 10000}@$ipAddress)"
     }
 
     private fun getIpAddress(): String {
@@ -47,6 +61,15 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    override fun onResume() {
+        super.onResume()
+        handler.post(updateIpRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(updateIpRunnable)
+    }
 
     private fun loadApps() {
         val packageManager = packageManager
