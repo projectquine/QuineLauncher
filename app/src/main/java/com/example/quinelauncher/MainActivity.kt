@@ -15,15 +15,8 @@ import android.os.Looper
 import android.provider.Settings
 import java.util.concurrent.TimeUnit
 import android.widget.Toast
-import android.net.nsd.NsdManager
-import android.net.nsd.NsdServiceInfo
 import android.util.Log
 import android.widget.ImageView
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -31,20 +24,10 @@ import java.net.URL
 
 private val IP_UPDATE_INTERVAL = TimeUnit.MINUTES.toMillis(1)
 
-private val SSH_SERVICE_NAME = "quineOS-ssh"
-private val SSH_SERVICE_TYPE = "_ssh._tcp."
-private val HTTP_SERVICE_NAME = "quineOS-http"
-private val HTTP_SERVICE_TYPE = "_http._tcp."
-private val SERVICE_PORT = 80
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val appList = ArrayList<App>()
-
-    private lateinit var nsdManager: NsdManager
-    private lateinit var registrationListener: NsdManager.RegistrationListener
-    private lateinit var httpRegistrationListener: NsdManager.RegistrationListener
 
     private val DOCKER_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(5)
     private lateinit var dockerStatusDot: ImageView
@@ -77,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         // load the apps we want to show in launcher
         loadApps()
         // Start our mDNS service
-        registerService()
+//        registerService()
 
         binding.recyclerView.layoutManager = GridLayoutManager(this, 4)
         binding.recyclerView.adapter = AppAdapter(this, appList)
@@ -85,8 +68,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        nsdManager.unregisterService(registrationListener)
-        nsdManager.unregisterService(httpRegistrationListener)
     }
 
     private fun startApps() {
@@ -235,119 +216,6 @@ class MainActivity : AppCompatActivity() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
-    }
-
-    private fun initializeNsdRegistrationListener() {
-        registrationListener = object : NsdManager.RegistrationListener {
-
-            override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
-                val registeredServiceName = NsdServiceInfo.serviceName
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Service registered: $registeredServiceName",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Service registration failed: $errorCode",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            override fun onServiceUnregistered(arg0: NsdServiceInfo) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Service unregistered: ${arg0.serviceName}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Service unregistration failed: $errorCode",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
-    private fun initializeHttpNsdRegistrationListener() {
-        httpRegistrationListener = object : NsdManager.RegistrationListener {
-
-            override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
-                val registeredServiceName = NsdServiceInfo.serviceName
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "HTTP service registered: $registeredServiceName",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "HTTP service registration failed: $errorCode",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            override fun onServiceUnregistered(arg0: NsdServiceInfo) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "HTTP service unregistered: ${arg0.serviceName}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "HTTP service unregistration failed: $errorCode",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
-    private fun registerService() {
-        val sshServiceInfo = NsdServiceInfo().apply {
-            serviceName = SSH_SERVICE_NAME
-            serviceType = SSH_SERVICE_TYPE
-            port = SERVICE_PORT
-        }
-
-        val httpServiceInfo = NsdServiceInfo().apply {
-            serviceName = HTTP_SERVICE_NAME
-            serviceType = HTTP_SERVICE_TYPE
-            port = SERVICE_PORT
-        }
-
-        nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager).apply {
-            initializeNsdRegistrationListener()
-            initializeHttpNsdRegistrationListener()
-            registerService(sshServiceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
-            registerService(httpServiceInfo, NsdManager.PROTOCOL_DNS_SD, httpRegistrationListener)
-        }
     }
 
 }
