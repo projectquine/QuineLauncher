@@ -11,6 +11,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 
 private const val NOTIFICATION_CHANNEL_ID = "QuineServiceChannel"
 
@@ -25,6 +27,10 @@ class NsdService : Service() {
     private lateinit var nsdManager: NsdManager
     private lateinit var registrationListener: NsdManager.RegistrationListener
     private lateinit var httpRegistrationListener: NsdManager.RegistrationListener
+    private lateinit var registerServicesHandler: Handler
+    private lateinit var registerServicesRunnable: Runnable
+    private val registerServicesInterval: Long = 120000 // 120 seconds
+
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -44,11 +50,22 @@ class NsdService : Service() {
 
         startForeground(1, notification)
 
-        registerService()
+        // Initialize the Handler and create the Runnable
+        registerServicesHandler = Handler(Looper.getMainLooper())
+        registerServicesRunnable = object : Runnable {
+            override fun run() {
+                registerService()
+                registerServicesHandler.postDelayed(this, registerServicesInterval)
+            }
+        }
+
+        // Start the periodic task to re-register the services
+        registerServicesRunnable.run()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        registerServicesHandler.removeCallbacks(registerServicesRunnable)
         nsdManager.unregisterService(registrationListener)
         nsdManager.unregisterService(httpRegistrationListener)
     }
@@ -112,6 +129,15 @@ class NsdService : Service() {
     }
 
     private fun registerService() {
+        // Unregister services if they are already registered
+        if (::nsdManager.isInitialized && ::registrationListener.isInitialized) {
+            nsdManager.unregisterService(registrationListener)
+        }
+        if (::nsdManager.isInitialized && ::httpRegistrationListener.isInitialized) {
+            nsdManager.unregisterService(httpRegistrationListener)
+        }
+
+        // Register the services
         val sshServiceInfo = NsdServiceInfo().apply {
             serviceName = SSH_SERVICE_NAME
             serviceType = SSH_SERVICE_TYPE
@@ -131,5 +157,6 @@ class NsdService : Service() {
             registerService(httpServiceInfo, NsdManager.PROTOCOL_DNS_SD, httpRegistrationListener)
         }
     }
+
 
 }
