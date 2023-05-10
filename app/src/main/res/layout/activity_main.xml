@@ -33,4 +33,18 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <TextView
+        android:id="@+id/tv_magisk_not_found"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Please reboot to allow Magisk to apply changes."
+        android:gravity="center"
+        android:textSize="24sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

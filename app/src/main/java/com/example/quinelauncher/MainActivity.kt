@@ -13,6 +13,8 @@ import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.View
+import android.widget.TextView
 import java.util.concurrent.TimeUnit
 import android.widget.Toast
 import android.util.Log
@@ -37,6 +39,18 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val tvMagiskNotFound = findViewById<TextView>(R.id.tv_magisk_not_found)
+
+        if (!isMagiskInstalled()) {
+            tvMagiskNotFound.visibility = View.VISIBLE
+            binding.recyclerView.visibility = View.GONE
+        } else {
+            loadApps()
+            binding.recyclerView.layoutManager = GridLayoutManager(this, 4)
+            binding.recyclerView.adapter = AppAdapter(this, appList)
+            tvMagiskNotFound.visibility = View.GONE
+        }
+
         dockerStatusDot = findViewById(R.id.dockerApiStatusDot)
 
         // Initialize the Toolbar and set it as the ActionBar
@@ -57,10 +71,6 @@ class MainActivity : AppCompatActivity() {
 
         // Start x11 and quineCamera apps and background them
         startApps()
-        // load the apps we want to show in launcher
-        loadApps()
-        // Start our mDNS service
-//        registerService()
 
         binding.recyclerView.layoutManager = GridLayoutManager(this, 4)
         binding.recyclerView.adapter = AppAdapter(this, appList)
@@ -188,6 +198,15 @@ class MainActivity : AppCompatActivity() {
             if (isAllowed(app.activityInfo.packageName)) {
                 appList.add(App(app.loadLabel(packageManager).toString(), app.activityInfo.packageName, app.loadIcon(packageManager)))
             }
+        }
+    }
+
+    private fun isMagiskInstalled(): Boolean {
+        return try {
+            packageManager.getApplicationInfo("com.topjohnwu.magisk", 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
         }
     }
 
